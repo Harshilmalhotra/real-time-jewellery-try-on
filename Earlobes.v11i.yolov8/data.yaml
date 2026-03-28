@@ -4,10 +4,3 @@ test: ../test/images
 
 nc: 4
 names: ['earlobe', 'eye', 'nose', 'wholeear']
-
-roboflow:
-  workspace: aleksandr-dubrovin-w9g2k
-  project: earlobes
-  version: 11
-  license: CC BY 4.0
-  url: https://universe.roboflow.com/aleksandr-dubrovin-w9g2k/earlobes/dataset/11
