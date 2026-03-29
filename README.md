@@ -101,4 +101,4 @@ Based on the latest training run of 100 epochs on a dataset of **11,000+ images*
 Feel free to fork this project and submit pull requests for hardware-specific optimizations or new feature detections.
 
 ---
-*Developed by Harshil Malhotra & Antigravity AI.*
+*Developed by Harshil Malhotra*
