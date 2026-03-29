@@ -8,7 +8,7 @@ from onnxruntime.quantization import quantize_dynamic, QuantType
 # CONFIG
 # =========================
 DATA_PATH = "Earlobes.v11i.yolov8/data.yaml"
-RUN_NAME = "ear_detector_refined"
+RUN_NAME = "ear_detector_final_fixed"
 EPOCHS = 150
 IMG_SIZE = 512
 BATCH_SIZE = 16   # for RTX 3050 (4GB) - adjusted for YOLOv8n
