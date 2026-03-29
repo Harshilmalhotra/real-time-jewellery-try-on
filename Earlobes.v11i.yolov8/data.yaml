@@ -1,6 +1,0 @@
-train: /home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8/train/images
-val: /home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8/valid/images
-test: /home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8/test/images
-
-nc: 2
-names: ['wholeear', 'earlobe']
