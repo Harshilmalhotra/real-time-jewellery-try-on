@@ -1,150 +1,88 @@
 import os
-import time
 import torch
+import yaml
 from ultralytics import YOLO
-from onnxruntime.quantization import quantize_dynamic, QuantType
 
-# =========================
-# CONFIG
-# =========================
-DATA_PATH = "Earlobes.v11i.yolov8/data.yaml"
-RUN_NAME = "ear_detector_final_fixed"
-EPOCHS = 150
-IMG_SIZE = 512
-BATCH_SIZE = 16   # for RTX 3050 (4GB) - adjusted for YOLOv8n
+# Configuration
+DATASET_YAML = "/home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8/data.yaml"
+MODEL_TYPE = "yolov8n.pt"  # Nano model: Perfect for mobile (Android/iOS)
+PROJECT_NAME = "multi_feature_detection"
+EXPERIMENT_NAME = "v1_nano"
 
+def train():
+    # Load dataset info for summary
+    with open(DATASET_YAML, 'r') as f:
+        data_info = yaml.safe_load(f)
+    classes = data_info.get('names', [])
 
-# =========================
-# SYSTEM INFO
-# =========================
-def print_system_info():
-    print("\n========== SYSTEM INFO ==========")
-    cuda = torch.cuda.is_available()
-    print(f"CUDA Available: {cuda}")
+    # Detect device
+    device = 0 if torch.cuda.is_available() else 'cpu'
+    device_name = torch.cuda.get_device_name(0) if device != 'cpu' else 'CPU'
 
-    if cuda:
-        print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+    print("\n" + "="*50)
+    print("🚀 TRAINING CONFIGURATION SUMMARY")
+    print("="*50)
+    print(f"🔹 Model Type    : {MODEL_TYPE}")
+    print(f"🔹 Dataset       : {DATASET_YAML}")
+    print(f"🔹 Classes ({len(classes)}) : {', '.join(classes)}")
+    print(f"🔹 Image Size    : 640")
+    print(f"🔹 Epochs        : 100")
+    print(f"🔹 Device        : {device_name}")
+    print(f"🔹 Project       : {PROJECT_NAME}/{EXPERIMENT_NAME}")
+    
+    if device == 'cpu':
+        print("\n⚠️  WARNING: CUDA not detected. Training will be VERY SLOW on CPU.")
     else:
-        print("⚠️ Using CPU")
+        print("\n✅ GPU Accelerating enabled.")
+    print("="*50 + "\n")
 
-    print("================================\n")
+    # 1. Load the pre-trained Nano model
+    print(f"Loading {MODEL_TYPE}...")
+    model = YOLO(MODEL_TYPE)
 
-
-# =========================
-# DATASET INFO
-# =========================
-def print_dataset_info():
-    base = "Earlobes.v11i.yolov8"
-
-    def count(path):
-        return len(os.listdir(path)) if os.path.exists(path) else 0
-
-    print("\n========== DATASET INFO ==========")
-    print(f"Train Images: {count(f'{base}/train/images')}")
-    print(f"Valid Images: {count(f'{base}/valid/images')}")
-    print(f"Test  Images: {count(f'{base}/test/images')}")
-    print("=================================\n")
-
-
-# =========================
-# TRAIN MODEL
-# =========================
-def train_model():
-    print_system_info()
-    print_dataset_info()
-
-    device = 0 if torch.cuda.is_available() else "cpu"
-
-    print("\n========== TRAIN CONFIG ==========")
-    print(f"Epochs: {EPOCHS}")
-    print(f"Image Size: {IMG_SIZE}")
-    print(f"Batch Size: {BATCH_SIZE}")
-    print(f"Device: {'GPU' if device == 0 else 'CPU'}")
-    print("Classes: wholeear + earlobe")
-    print("=================================\n")
-
-    model = YOLO("yolov8n.pt")
-
-    start_time = time.time()
-
-    model.train(
-        data=DATA_PATH,
-        epochs=EPOCHS,
-        imgsz=IMG_SIZE,
-        batch=BATCH_SIZE,
+    # 2. Train the model
+    # Key parameters for high accuracy and mobile readiness:
+    # imgsz=640: Standard for YOLOv8, good balance of speed/accuracy
+    # epochs=100: Sufficient for 11k images to reach >90% mAP
+    # batch=-1: Auto-detection of best batch size for your GPU memory
+    print("Starting training...")
+    results = model.train(
+        data=DATASET_YAML,
+        epochs=100,
+        imgsz=640,
+        batch=-1,
+        project=PROJECT_NAME,
+        name=EXPERIMENT_NAME,
         device=device,
-        name=RUN_NAME,
-
-        single_cls=False,
-
-        # augmentation
-        augment=True,
-        mosaic=1.0,
-        mixup=0.2,
-        degrees=15,
-        scale=0.5,
-        fliplr=0.5,
-        hsv_h=0.015,
-        hsv_s=0.7,
-        hsv_v=0.4,
-
-        patience=50,  # early stopping
-        workers=4,
-        cache=True,
-        verbose=True
+        cache=True,    # Cache images for faster training
+        patience=20,   # Early stopping if no improvement for 20 epochs
+        save=True,
+        exist_ok=True
     )
 
-    end_time = time.time()
+    print("Training complete!")
+    print(f"Results saved to: {results.save_dir}")
 
-    print("\n========== TRAINING COMPLETE ==========")
-    print(f"Total Time: {(end_time - start_time)/60:.2f} minutes")
-    print("Best model saved automatically as best.pt")
-    print("=======================================\n")
-
-
-# =========================
-# EXPORT + QUANTIZE
-# =========================
-def export_model():
-    print("\n========== EXPORT ==========")
-
-    import glob
-    search_path = f"runs/detect/{RUN_NAME}*/weights/best.pt"
-    matches = glob.glob(search_path)
-
-    if not matches:
-        print("❌ best.pt not found. Training failed.")
-        return
+    # 3. Export for Mobile
+    best_model_path = os.path.join(results.save_dir, 'weights', 'best.pt')
+    if os.path.exists(best_model_path):
+        trained_model = YOLO(best_model_path)
         
-    best_path = max(matches, key=os.path.getmtime)
+        # Export to ONNX (for PC Inference)
+        print("Exporting best model to ONNX...")
+        trained_model.export(format='onnx', opset=12) 
+        
+        # Export to TFLite (Android)
+        print("Exporting best model to TFLite for Android...")
+        trained_model.export(format='tflite', int8=True)  # int8 quantization for speed
+        
+        # Export to CoreML (iOS)
+        print("Exporting best model to CoreML for iOS...")
+        trained_model.export(format='coreml', nms=True)   # Include NMS for easier device integration
+        
+        print(f"Mobile models exported to: {os.path.dirname(best_model_path)}")
+    else:
+        print(f"Error: Could not find best model at {best_model_path}")
 
-    print(f"Loading model: {best_path}")
-
-    model = YOLO(best_path)
-
-    print("Exporting ONNX...")
-    model.export(format="onnx", imgsz=IMG_SIZE, opset=12)
-
-    onnx_path = best_path.replace(".pt", ".onnx")
-    quant_path = best_path.replace(".pt", "_quantized.onnx")
-
-    print("Quantizing model...")
-    quantize_dynamic(
-        onnx_path,
-        quant_path,
-        weight_type=QuantType.QInt8
-    )
-
-    print("\n========== EXPORT COMPLETE ==========")
-    print(f"ONNX model: {onnx_path}")
-    print(f"Quantized model: {quant_path}")
-    print("=====================================\n")
-
-
-# =========================
-# MAIN
-# =========================
 if __name__ == "__main__":
-    train_model()
-    export_model()
+    train()

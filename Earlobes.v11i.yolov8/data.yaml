@@ -1,6 +1,7 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
+path: /home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8
+train: train/images
+val: valid/images
+test: test/images
 
 nc: 4
 names: ['earlobe', 'eye', 'nose', 'wholeear']
