@@ -7,8 +7,8 @@
  */
 
 const CONFIG = {
-    modelPath: '../best.onnx',
-    earringImgPath: '../earring.png',
+    modelPath: 'best.onnx',
+    earringImgPath: 'earring.png',
     confThreshold: 0.45,
     classes: ['earlobe', 'eye', 'nose', 'wholeear'],
     physics: {
