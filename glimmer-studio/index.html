@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Glimmer AR | Royal Jewellery Studio</title>
+    <!-- Luxury Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --royal-gold: linear-gradient(135deg, #d4af37 0%, #f1c40f 50%, #b8860b 100%);
+            --deep-obsidian: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --gold-glow: 0 0 30px rgba(212, 175, 55, 0.2);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--deep-obsidian);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(212, 175, 55, 0.05) 0%, transparent 40%);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            padding-bottom: 80px; /* Space for footer */
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            letter-spacing: clamp(5px, 2vw, 12px);
+            margin: 0;
+            background: var(--royal-gold);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.2));
+            line-height: 1.2;
+        }
+
+        header p {
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: clamp(2px, 1vw, 4px);
+            font-size: 0.7rem;
+            color: #777;
+            margin-top: 5px;
+        }
+
+        .viewport-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 4/3;
+            margin: clamp(20px, 5vh, 40px) auto;
+            border-radius: clamp(15px, 4vw, 30px);
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.9), var(--gold-glow);
+            backdrop-filter: blur(10px);
+        }
+
+        #webcam {
+            position: absolute;
+            left: -9999px;
+            width: 1px; height: 1px;
+        }
+
+        #output-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: clamp(15px, 4vw, 30px);
+            object-fit: cover;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(15px, 3vh, 25px);
+            width: 100%;
+        }
+
+        .primary-btn {
+            background: var(--royal-gold);
+            color: #000;
+            border: none;
+            padding: clamp(12px, 3vw, 18px) clamp(30px, 8vw, 60px);
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            letter-spacing: 2px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: fit-content;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.4);
+            filter: brightness(1.2);
+        }
+
+        .status-bar {
+            background: var(--glass);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.7rem;
+            color: #666;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        #status-val { color: #aaa; font-weight: 600; }
+        #fps-val { color: #d4af37; font-weight: 700; }
+
+        footer {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            color: #444;
+            text-transform: uppercase;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+            border-bottom: 1px solid #333;
+            padding-bottom: 2px;
+        }
+
+        footer a:hover {
+            color: #d4af37;
+            border-color: #d4af37;
+        }
+
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--deep-obsidian);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .royal-loader {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            border-top: 2px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Mobile specific fixes */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .viewport-container { border-radius: 20px; }
+            #output-canvas { border-radius: 20px; }
+            .status-bar { font-size: 0.6rem; }
+            footer { padding-bottom: 30px; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>GLIMMER</h1>
+            <p>HIGH-FIDELITY AR JEWELLERY TRY-ON</p>
+        </header>
+
+        <div class="viewport-container">
+            <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="output-canvas"></canvas>
+            
+            <div id="loading-overlay">
+                <div class="royal-loader"></div>
+                <p style="margin-top: 30px; letter-spacing: 5px; color: #d4af37; font-family: 'Cinzel'; font-size: 0.8rem;">INITIATING ROYAL MIRROR</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="start-btn" class="primary-btn">START EXPERIENCE</button>
+            <div class="status-bar">
+                SYSTEM <span id="status-val">READY</span> | FPS <span id="fps-val">0</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        MADE BY <a href="https://harshilmalhotra.dev/" target="_blank">HARSHIL MALHOTRA</a> &copy; ALL RIGHTS RESERVED
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
