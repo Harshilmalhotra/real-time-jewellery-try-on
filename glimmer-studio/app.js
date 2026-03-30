@@ -186,15 +186,18 @@ async function aiLoop() {
 }
 
 async function runInference() {
-    // 1. Efficient Preprocessing at 320x320 (High-Speed)
-    ctx.drawImage(video, 0, 0, 640, 480); // Ensure mirror is updated
+    // 1. ULTRA-TIGHT CENTER CROP (384x384)
+    // We zoom in even more to focus purely on the face/ears
+    const cropSize = 384; 
+    const offsetX = (640 - cropSize) / 2;
+    const offsetY = (480 - cropSize) / 2; // Vertical centering too
     
     tCtx.save();
-    tCtx.scale(-0.5, 0.5); // Resize 640 down to 320
-    tCtx.drawImage(video, -640, 0, 640, 480);
+    tCtx.scale(-1, 1);
+    // Draw the tight 384x384 crop into our 320x320 AI input
+    tCtx.drawImage(video, offsetX, offsetY, cropSize, cropSize, -320, 0, 320, 320);
     tCtx.restore();
     
-    // We only need a 320x320 chunk for the High-Speed AI
     const imgData = tCtx.getImageData(0, 0, 320, 320).data;
     const input = new Float32Array(3 * 320 * 320);
     const area = 320 * 320;
@@ -212,7 +215,8 @@ async function runInference() {
     
     // 2. High-Speed Detection Filter
     const detections = [];
-    const boxes = 2100; // YOLOv8n has fewer boxes (2100) at 320x320
+    const boxes = 2100;
+    const scaleFactor = cropSize / 320; 
     
     for (let i = 0; i < boxes; i++) {
         let maxConf = 0, clsIdx = -1;
@@ -222,11 +226,11 @@ async function runInference() {
         }
 
         if (maxConf > CONFIG.confThreshold) {
-            // SCALE BACK TO 640x480 (Multiply by 2 for the 320->640 stretch)
+            // SCALE BACK TO 640x480 (with offset correction for the tight crop)
             detections.push({
-                cx: output[i] * 2, 
-                cy: output[boxes + i] * 2,
-                w: output[2 * boxes + i] * 2, 
+                cx: (output[i] * scaleFactor) + offsetX, 
+                cy: (output[boxes + i] * scaleFactor) + offsetY,
+                w: output[2 * boxes + i] * scaleFactor, 
                 label: clsIdx
             });
         }
