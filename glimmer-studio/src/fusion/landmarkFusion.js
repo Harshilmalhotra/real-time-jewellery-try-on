@@ -13,17 +13,17 @@ export class LandmarkFusion {
         if (!poseData) return null;
 
         const nose = {
-            x: poseData.nose.x * videoWidth,
+            x: (1 - poseData.nose.x) * videoWidth,
             y: poseData.nose.y * videoHeight
         };
 
-        // Convert normalized pose coordinates to pixel coordinates
+        // Convert normalized pose coordinates to pixel coordinates (MIRRORED to match display)
         const leftShoulder = {
-            x: poseData.leftShoulder.x * videoWidth,
+            x: (1 - poseData.leftShoulder.x) * videoWidth,
             y: poseData.leftShoulder.y * videoHeight
         };
         const rightShoulder = {
-            x: poseData.rightShoulder.x * videoWidth,
+            x: (1 - poseData.rightShoulder.x) * videoWidth,
             y: poseData.rightShoulder.y * videoHeight
         };
 
