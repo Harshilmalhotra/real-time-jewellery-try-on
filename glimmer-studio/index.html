@@ -1,11 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Glimmer AR | Royal Jewellery Studio</title>
-    <!-- Luxury Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
+    
     <style>
         :root {
             --royal-gold: linear-gradient(135deg, #d4af37 0%, #f1c40f 50%, #b8860b 100%);
@@ -29,18 +25,23 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .app-container {
             flex: 1;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             z-index: 2;
-            padding-bottom: 80px; /* Space for footer */
+            padding-bottom: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         header h1 {
@@ -59,10 +60,18 @@
         header p {
             font-family: 'Inter', sans-serif;
             text-transform: uppercase;
-            letter-spacing: clamp(2px, 1vw, 4px);
+            letter-spacing: 4px;
             font-size: 0.7rem;
             color: #777;
             margin-top: 5px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .viewport-container {
@@ -70,8 +79,7 @@
             width: 100%;
             max-width: 640px;
             aspect-ratio: 4/3;
-            margin: clamp(20px, 5vh, 40px) auto;
-            border-radius: clamp(15px, 4vw, 30px);
+            border-radius: 30px;
             overflow: hidden;
             background: #000;
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -91,77 +99,122 @@
             left: 0;
             width: 100%;
             height: 100%;
-            border-radius: clamp(15px, 4vw, 30px);
             object-fit: cover;
         }
 
-        .controls {
+        .sidebar {
+            width: 300px;
+            background: var(--glass);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 25px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: #d4af37;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            display: block;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toggle-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .tool-btn.active {
+            background: var(--royal-gold);
+            color: #000;
+            border-color: transparent;
+            font-weight: 700;
+        }
+
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .asset-card {
+            aspect-ratio: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 15px;
+            cursor: pointer;
+            padding: 10px;
+            display: flex;
             align-items: center;
-            gap: clamp(15px, 3vh, 25px);
-            width: 100%;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .asset-card:hover {
+            border-color: #d4af37;
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .asset-card.active {
+            border-color: #d4af37;
+            box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .asset-card img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
         }
 
         .primary-btn {
             background: var(--royal-gold);
             color: #000;
             border: none;
-            padding: clamp(12px, 3vw, 18px) clamp(30px, 8vw, 60px);
+            padding: 15px;
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-            letter-spacing: 2px;
             border-radius: 50px;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: fit-content;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.4);
-            filter: brightness(1.2);
-        }
-
-        .status-bar {
-            background: var(--glass);
-            padding: 8px 20px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.7rem;
-            color: #666;
-            letter-spacing: 1px;
-            white-space: nowrap;
-        }
-
-        #status-val { color: #aaa; font-weight: 600; }
-        #fps-val { color: #d4af37; font-weight: 700; }
-
-        footer {
-            width: 100%;
-            padding: 20px;
-            text-align: center;
-            font-size: 0.65rem;
-            letter-spacing: 2px;
-            color: #444;
-            text-transform: uppercase;
             margin-top: auto;
         }
 
-        footer a {
+        .status-bar {
+            margin-top: 20px;
+            font-size: 0.65rem;
             color: #666;
-            text-decoration: none;
-            transition: color 0.3s;
-            border-bottom: 1px solid #333;
-            padding-bottom: 2px;
+            letter-spacing: 2px;
+            text-align: center;
+            width: 100%;
         }
 
-        footer a:hover {
-            color: #d4af37;
-            border-color: #d4af37;
-        }
+        #status-val { color: #aaa; }
+        #fps-val { color: #d4af37; }
 
         #loading-overlay {
             position: absolute;
@@ -176,57 +229,84 @@
         }
 
         .royal-loader {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border: 2px solid rgba(212, 175, 55, 0.1);
             border-top: 2px solid #d4af37;
             border-radius: 50%;
-            animation: spin 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Mobile specific fixes */
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .viewport-container { border-radius: 20px; }
-            #output-canvas { border-radius: 20px; }
-            .status-bar { font-size: 0.6rem; }
-            footer { padding-bottom: 30px; }
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 0.6rem;
+            color: #444;
+            letter-spacing: 2px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
 </head>
 <body>
 
     <div class="app-container">
         <header>
             <h1>GLIMMER</h1>
-            <p>HIGH-FIDELITY AR JEWELLERY TRY-ON</p>
+            <p>ADVANCED MULTI-FEATURE AR STUDIO</p>
         </header>
 
-        <div class="viewport-container">
-            <video id="webcam" autoplay playsinline muted></video>
-            <canvas id="output-canvas"></canvas>
-            
-            <div id="loading-overlay">
-                <div class="royal-loader"></div>
-                <p style="margin-top: 30px; letter-spacing: 5px; color: #d4af37; font-family: 'Cinzel'; font-size: 0.8rem;">INITIATING ROYAL MIRROR</p>
+        <div class="main-layout">
+            <div class="viewport-container">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="output-canvas"></canvas>
+                
+                <div id="loading-overlay">
+                    <div class="royal-loader"></div>
+                    <p style="margin-top: 20px; letter-spacing: 3px; color: #d4af37; font-family: 'Cinzel'; font-size: 0.7rem;">CALIBRATING NEURAL MIRROR</p>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="control-group">
+                    <span class="section-title">COLLECTION</span>
+                    <div class="toggle-btns">
+                        <button id="toggle-earrings" class="tool-btn active">Earrings</button>
+                        <button id="toggle-necklace" class="tool-btn active">Necklace</button>
+                    </div>
+                </div>
+
+                <div id="earring-selector" class="control-group">
+                    <span class="section-title">EARRINGS</span>
+                    <div class="asset-grid">
+                        <div class="asset-card active" data-type="earring" data-path="earring.png">
+                            <img src="earring.png" alt="Earring">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="necklace-selector" class="control-group">
+                    <span class="section-title">NECKLACES</span>
+                    <div class="asset-grid">
+                        <div class="asset-card active" data-type="necklace" data-path="necklace_1.png">
+                            <img src="necklace_1.png" alt="Necklace">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="primary-btn">ENTER STUDIO</button>
             </div>
         </div>
 
-        <div class="controls">
-            <button id="start-btn" class="primary-btn">START EXPERIENCE</button>
-            <div class="status-bar">
-                SYSTEM <span id="status-val">READY</span> | FPS <span id="fps-val">0</span>
-            </div>
+        <div class="status-bar">
+            SYSTEM <span id="status-val">READY</span> | AI LATENCY <span id="fps-val">0</span>ms
         </div>
     </div>
 
     <footer>
-        MADE BY <a href="https://harshilmalhotra.dev/" target="_blank">HARSHIL MALHOTRA</a> &copy; ALL RIGHTS RESERVED
+        MADE BY HARSHIL MALHOTRA &copy; 2026
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

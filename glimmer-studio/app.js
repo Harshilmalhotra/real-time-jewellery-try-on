@@ -1,241 +1,183 @@
 /**
- * ✨ Glimmer AI - Virtual Jewellery Try-On (v2.0.0 WEB)
- * Developed by Harshil Malhotra
- * 
- * This uses ONNX Runtime Web to run YOLOv8 directly in the browser.
- * Zero-Lag Mirror with Background AI Processing.
+ * ✨ Glimmer AR Engine v3.0 (MODULAR)
+ * Integrated YOLOv8 + MediaPipe Pose Fusion
  */
 
+import { YoloDetector } from './src/detectors/yoloDetector.js';
+import { PoseDetector } from './src/detectors/poseDetector.js';
+import { LandmarkFusion } from './src/fusion/landmarkFusion.js';
+import { EarringEngine } from './src/jewellery/earringEngine.js';
+import { NecklaceRenderer } from './src/render/necklaceRenderer.js';
+
 const CONFIG = {
-    modelPath: 'best.onnx',
-    earringImgPath: 'earring.png',
-    confThreshold: 0.45,
-    classes: ['earlobe', 'eye', 'nose', 'wholeear'],
-    physics: {
-        gravity: 0.9,
-        damping: 0.93,
-        swing: 0.18,
-        stiffness: 0.06
-    }
+    yolo: {
+        modelPath: 'best.onnx',
+        confThreshold: 0.45
+    },
+    earringImg: 'earring.png',
+    necklaceImg: 'necklace_1.png'
 };
 
-class EarringTracker {
-    constructor(x, y, size) {
-        this.x = x; this.y = y; this.size = size;
-        this.angle = 0; this.vel = 0;
-        this.lastX = x;
-        this.active = true;
-        this.missedFrames = 0;
+class GlimmerApp {
+    constructor() {
+        this.video = document.getElementById('webcam');
+        this.canvas = document.getElementById('output-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        this.yolo = new YoloDetector(CONFIG.yolo);
+        this.pose = new PoseDetector();
+        this.fusion = new LandmarkFusion();
+        
+        this.earrings = new EarringEngine(this.ctx);
+        this.necklace = new NecklaceRenderer(this.ctx);
+        
+        this.state = {
+            showEarrings: true,
+            showNecklace: true,
+            isAIProcessing: false,
+            lastYoloDetections: [],
+            lastPoseData: null,
+            lastFusion: null
+        };
+
+        this.ui = {
+            status: document.getElementById('status-val'),
+            fps: document.getElementById('fps-val'),
+            overlay: document.getElementById('loading-overlay'),
+            startBtn: document.getElementById('start-btn'),
+            toggleEarrings: document.getElementById('toggle-earrings'),
+            toggleNecklace: document.getElementById('toggle-necklace')
+        };
     }
 
-    update(tx, ty, ts, detected = true) {
-        if (detected) {
-            this.missedFrames = 0;
-            this.x = this.x * 0.15 + tx * 0.85; 
-            this.y = this.y * 0.15 + ty * 0.85;
-            this.size = this.size * 0.6 + ts * 0.4;
+    async init() {
+        try {
+            this.ui.status.innerText = 'INITIALIZING NEURAL CORES...';
             
-            let dx = this.x - this.lastX;
-            this.vel += -dx * CONFIG.physics.swing;
-            this.lastX = this.x;
-        } else {
-            this.missedFrames++;
-            if (this.missedFrames > 15) this.active = false;
-        }
+            // 1. Initialize Detectors
+            await Promise.all([
+                this.yolo.init(),
+                this.pose.init()
+            ]);
 
-        let torque = -CONFIG.physics.gravity * Math.sin(this.angle * Math.PI / 180);
-        let restoring = -this.angle * CONFIG.physics.stiffness;
-        this.vel = (this.vel + torque + restoring) * CONFIG.physics.damping;
-        this.angle += this.vel;
-    }
-}
+            // 2. Load Assets
+            await Promise.all([
+                this.earrings.loadAsset(CONFIG.earringImg),
+                this.necklace.loadAsset(CONFIG.necklaceImg)
+            ]);
 
-let session = null;
-let trackers = [];
-let earringImg = new Image();
-let lastDetections = [];
-let isProcessingAI = false;
-
-const canvas = document.getElementById('output-canvas');
-const ctx = canvas.getContext('2d');
-const video = document.getElementById('webcam');
-const statusVal = document.getElementById('status-val');
-const fpsVal = document.getElementById('fps-val');
-const loadingOverlay = document.getElementById('loading-overlay');
-
-// Global processing canvas at 320px for High-Speed AI
-const offscreen = new OffscreenCanvas(320, 320);
-const tCtx = offscreen.getContext('2d');
-
-async function init() {
-    try {
-        statusVal.innerText = 'CALIBRATING PRECISION AI...';
-        
-        // Use v1.14.0 - Perfectly compatible with standard local servers
-        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/';
-        ort.env.wasm.numThreads = 1; 
-        ort.env.wasm.proxy = false;
-
-        session = await ort.InferenceSession.create(CONFIG.modelPath, {
-            executionProviders: ['wasm'], // Use WASM (CPU)
-            graphOptimizationLevel: 'all'
-        });
-
-        await new Promise((res, rej) => {
-            earringImg.onload = res;
-            earringImg.onerror = rej;
-            earringImg.src = CONFIG.earringImgPath;
-        });
-
-        statusVal.innerText = 'WAKING ROYAL MIRROR...';
-        video.srcObject = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480, facingMode: 'user' }
-        });
-        await video.play();
-        
-        canvas.width = 640;
-        canvas.height = 480;
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => loadingOverlay.style.display = 'none', 500);
-        
-        statusVal.innerText = 'ROYAL CORE ONLINE';
-        
-        // START THE LOOPS
-        drawMirror(); // Smooth Display
-        aiLoop();     // Background AI
-    } catch (err) {
-        console.error(err);
-        statusVal.innerText = 'SYSTEM ERROR: ' + err.message;
-    }
-}
-
-// 1. MIRROR LOOP (Locked to Screen Refresh Rate)
-function drawMirror() {
-    if (video.readyState < 2) return requestAnimationFrame(drawMirror);
-
-    // Draw Mirror Feed
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    ctx.restore();
-
-    // Match Physics using LAST detections
-    let used = new Set();
-    trackers.forEach(t => {
-        let bestIdx = -1;
-        let bestDist = 80;
-        lastDetections.forEach((det, i) => {
-            if (CONFIG.classes[det.label] !== 'earlobe') return;
-            let dist = Math.hypot(t.x - det.cx, t.y - det.cy);
-            if (!used.has(i) && dist < bestDist) {
-                bestIdx = i; bestDist = dist;
-            }
-        });
-
-        if (bestIdx !== -1) {
-            let det = lastDetections[bestIdx];
-            t.update(det.cx, det.cy, det.w, true);
-            used.add(bestIdx);
-        } else {
-            t.update(0,0,0, false);
-        }
-    });
-
-    lastDetections.forEach((det, i) => {
-        if (!used.has(i) && CONFIG.classes[det.label] === 'earlobe') {
-            trackers.push(new EarringTracker(det.cx, det.cy, det.w));
-        }
-    });
-    trackers = trackers.filter(t => t.active);
-
-    // 3. Render Tracking (Jewellery Only)
-    trackers.forEach(t => {
-        if (t.missedFrames > 4) return;
-        
-        // --- RENDER JEWELLERY ---
-        ctx.save();
-        ctx.translate(t.x, t.y);
-        ctx.rotate(t.angle * Math.PI / 180);
-        let scale = (t.size * 2.8) / earringImg.width;
-        let ew = earringImg.width * scale;
-        let eh = earringImg.height * scale;
-        ctx.drawImage(earringImg, -ew/2, 0, ew, eh);
-        ctx.restore();
-    });
-
-    requestAnimationFrame(drawMirror);
-}
-
-// 2. ASYNC AI LOOP
-async function aiLoop() {
-    if (isProcessingAI || video.readyState < 2) {
-        return setTimeout(aiLoop, 10);
-    }
-    
-    isProcessingAI = true;
-    try {
-        const start = performance.now();
-        lastDetections = await runInference();
-        fpsVal.innerText = Math.round(1000 / (performance.now() - start));
-    } catch (err) {
-        console.warn('AI skipping frame', err);
-    }
-    isProcessingAI = false;
-    setTimeout(aiLoop, 5);
-}
-
-async function runInference() {
-    // 1. ULTRA-TIGHT CENTER CROP (384x384)
-    // We zoom in even more to focus purely on the face/ears
-    const cropSize = 384; 
-    const offsetX = (640 - cropSize) / 2;
-    const offsetY = (480 - cropSize) / 2; // Vertical centering too
-    
-    tCtx.save();
-    tCtx.scale(-1, 1);
-    // Draw the tight 384x384 crop into our 320x320 AI input
-    tCtx.drawImage(video, offsetX, offsetY, cropSize, cropSize, -320, 0, 320, 320);
-    tCtx.restore();
-    
-    const imgData = tCtx.getImageData(0, 0, 320, 320).data;
-    const input = new Float32Array(3 * 320 * 320);
-    const area = 320 * 320;
-    
-    for (let i = 0; i < area; i++) {
-        const i4 = i * 4;
-        input[i] = imgData[i4] / 255.0;
-        input[i + area] = imgData[i4 + 1] / 255.0;
-        input[i + area * 2] = imgData[i4 + 2] / 255.0;
-    }
-
-    const tensor = new ort.Tensor('float32', input, [1, 3, 320, 320]);
-    const results = await session.run({ images: tensor });
-    const output = results[Object.keys(results)[0]].data;
-    
-    // 2. High-Speed Detection Filter
-    const detections = [];
-    const boxes = 2100;
-    const scaleFactor = cropSize / 320; 
-    
-    for (let i = 0; i < boxes; i++) {
-        let maxConf = 0, clsIdx = -1;
-        for (let j = 0; j < 4; j++) {
-            let conf = output[(4 + j) * boxes + i];
-            if (conf > maxConf) { maxConf = conf; clsIdx = j; }
-        }
-
-        if (maxConf > CONFIG.confThreshold) {
-            // SCALE BACK TO 640x480 (with offset correction for the tight crop)
-            detections.push({
-                cx: (output[i] * scaleFactor) + offsetX, 
-                cy: (output[boxes + i] * scaleFactor) + offsetY,
-                w: output[2 * boxes + i] * scaleFactor, 
-                label: clsIdx
+            // 3. Setup Webcam
+            this.ui.status.innerText = 'WAKING CAMERA...';
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480, facingMode: 'user' }
             });
+            this.video.srcObject = stream;
+            await this.video.play();
+
+            this.canvas.width = 640;
+            this.canvas.height = 480;
+
+            // 4. Bind UI
+            this.setupUI();
+
+            // 5. Hide Loader
+            this.ui.overlay.style.opacity = '0';
+            setTimeout(() => this.ui.overlay.style.display = 'none', 500);
+            this.ui.status.innerText = 'STUDIO ONLINE';
+
+            // 6. Start Loops
+            this.renderLoop();
+            this.aiLoop();
+
+        } catch (err) {
+            console.error("App Init Error:", err);
+            this.ui.status.innerText = "CRITICAL ERROR: " + err.message;
         }
     }
-    return detections;
+
+    setupUI() {
+        this.ui.toggleEarrings.onclick = () => {
+            this.state.showEarrings = !this.state.showEarrings;
+            this.ui.toggleEarrings.classList.toggle('active', this.state.showEarrings);
+        };
+
+        this.ui.toggleNecklace.onclick = () => {
+            this.state.showNecklace = !this.state.showNecklace;
+            this.ui.toggleNecklace.classList.toggle('active', this.state.showNecklace);
+        };
+
+        // Asset selection logic
+        document.querySelectorAll('.asset-card').forEach(card => {
+            card.onclick = async () => {
+                const type = card.dataset.type;
+                const path = card.dataset.path;
+                
+                document.querySelectorAll(`.asset-card[data-type="${type}"]`).forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                if (type === 'earring') await this.earrings.loadAsset(path);
+                if (type === 'necklace') await this.necklace.loadAsset(path);
+            };
+        });
+    }
+
+    async aiLoop() {
+        if (this.state.isAIProcessing || this.video.readyState < 2) {
+            return setTimeout(() => this.aiLoop(), 10);
+        }
+
+        this.state.isAIProcessing = true;
+        const start = performance.now();
+
+        try {
+            // Run YOLO and Pose in parallel
+            const [yoloDetections, poseData] = await Promise.all([
+                this.yolo.detect(this.video),
+                this.pose.detect(this.video)
+            ]);
+
+            this.state.lastYoloDetections = yoloDetections;
+            this.state.lastPoseData = poseData;
+            
+            // Perform Fusion
+            this.state.lastFusion = this.fusion.fuse(
+                yoloDetections, 
+                poseData, 
+                this.canvas.width, 
+                this.canvas.height
+            );
+
+            this.ui.fps.innerText = Math.round(performance.now() - start);
+        } catch (err) {
+            console.warn("AI Loop Error:", err);
+        }
+
+        this.state.isAIProcessing = false;
+        setTimeout(() => this.aiLoop(), 5);
+    }
+
+    renderLoop() {
+        if (this.video.readyState >= 2) {
+            // 1. Draw Mirror Feed
+            this.ctx.save();
+            this.ctx.translate(this.canvas.width, 0);
+            this.ctx.scale(-1, 1);
+            this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+
+            // 2. Render Jewellery
+            if (this.state.showEarrings) {
+                this.earrings.updateAndRender(this.state.lastYoloDetections);
+            }
+
+            if (this.state.showNecklace && this.state.lastFusion) {
+                this.necklace.render(this.state.lastFusion);
+            }
+        }
+        requestAnimationFrame(() => this.renderLoop());
+    }
 }
 
-document.getElementById('start-btn').onclick = init;
+// Global initialization
+const app = new GlimmerApp();
+document.getElementById('start-btn').onclick = () => app.init();
