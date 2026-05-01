@@ -36,3 +36,10 @@ This major release marks the transition from a Python-centric prototype to a ful
 4. Click **"START STUDIO"** to wake the neural cores.
 
 **Optimized for high-performance real-time web AR. Developed by Harshil Malhotra.**
+
+---
+
+### ⚖️ Licensing Information
+Please note that this project operates under a **Custom Non-Commercial & Attribution License** (see `LICENSE.md` in the root directory). 
+*   **Non-Commercial Use:** Free to use for personal, educational, and research purposes, provided that proper attribution is given.
+*   **Commercial Use:** Any business-related use, monetization, or integration into commercial products requires a paid commercial license and royalty agreement. Please contact the developer for commercial licensing details.

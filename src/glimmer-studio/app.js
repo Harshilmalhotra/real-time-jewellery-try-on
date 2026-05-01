@@ -50,7 +50,6 @@ class GlimmerApp {
             status: document.getElementById('status-val'),
             fps: document.getElementById('fps-val'),
             overlay: document.getElementById('loading-overlay'),
-            startBtn: document.getElementById('start-btn'),
             toggleEarrings: document.getElementById('toggle-earrings'),
             toggleNecklace: document.getElementById('toggle-necklace'),
             earringGrid: document.getElementById('earring-grid'),
@@ -62,9 +61,10 @@ class GlimmerApp {
         this.setupUI();
     }
 
-    async init() {
+    async init(addLog) {
         try {
             this.ui.status.innerText = 'INITIALIZING NEURAL CORES...';
+            if (addLog) await addLog("Initializing Neural Cores...", 500);
             
             // 1. Initialize Detectors
             await Promise.all([
@@ -72,9 +72,13 @@ class GlimmerApp {
                 this.pose.init()
             ]);
 
+            if (addLog) await addLog("Neural models loaded successfully.", 500);
+
             // 2. Load Default Assets
             const defaultEarring = JEWELLERY_ASSETS.earrings[0].path;
             const defaultNecklace = JEWELLERY_ASSETS.necklaces[0].path;
+
+            if (addLog) await addLog("Syncing digital jewellery assets...", 400);
 
             await Promise.all([
                 this.earrings.loadAsset(defaultEarring),
@@ -83,18 +87,26 @@ class GlimmerApp {
 
             // 3. Setup Webcam
             this.ui.status.innerText = 'WAKING CAMERA...';
+            if (addLog) await addLog("Requesting camera permissions...", 500);
+            
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 640, height: 480, facingMode: 'user' }
             });
+            
+            if (addLog) await addLog("Camera connected. Aligning quantum mirrors...", 600);
+            
             this.video.srcObject = stream;
             await this.video.play();
 
             this.canvas.width = 640;
             this.canvas.height = 480;
 
+            if (addLog) await addLog("Calibration complete. Entering Studio.", 600);
+
             // 5. Hide Loader
             this.ui.overlay.style.opacity = '0';
-            setTimeout(() => this.ui.overlay.style.display = 'none', 500);
+            this.ui.overlay.style.backdropFilter = 'blur(0px)';
+            setTimeout(() => this.ui.overlay.style.display = 'none', 1000);
             this.ui.status.innerText = 'STUDIO ONLINE';
 
             // 6. Start Loops
@@ -104,6 +116,7 @@ class GlimmerApp {
         } catch (err) {
             console.error("App Init Error:", err);
             this.ui.status.innerText = "CRITICAL ERROR: " + err.message;
+            if (addLog) await addLog(`[CRITICAL FAULT] ${err.message}`, 100);
         }
     }
 
@@ -221,4 +234,33 @@ class GlimmerApp {
 
 // Global initialization
 const app = new GlimmerApp();
-document.getElementById('start-btn').onclick = () => app.init();
+
+document.getElementById('turn-on-mirror-btn').onclick = async () => {
+    const btn = document.getElementById('turn-on-mirror-btn');
+    const logs = document.getElementById('techy-logs');
+    const logContainer = document.getElementById('log-container');
+    const magicCircle = document.getElementById('magic-circle');
+    
+    btn.style.display = 'none';
+    logs.style.display = 'flex';
+    magicCircle.style.display = 'block';
+
+    const addLog = (msg, delay) => new Promise(resolve => {
+        setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            div.innerText = `> ${msg}`;
+            logContainer.appendChild(div);
+            // Auto-scroll logic if logs get too long
+            if (logContainer.children.length > 4) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+            resolve();
+        }, delay);
+    });
+
+    await addLog("Magical mirror is unfolding...", 100);
+    await addLog("Verifying neural pathways...", 800);
+    
+    app.init(addLog);
+};
