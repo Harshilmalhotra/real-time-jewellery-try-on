@@ -8,14 +8,13 @@ import { PoseDetector } from './src/detectors/poseDetector.js';
 import { LandmarkFusion } from './src/fusion/landmarkFusion.js';
 import { EarringEngine } from './src/jewellery/earringEngine.js';
 import { NecklaceRenderer } from './src/render/necklaceRenderer.js';
+import { JEWELLERY_ASSETS } from './jewellery/manifest.js';
 
 const CONFIG = {
     yolo: {
         modelPath: 'best.onnx',
         confThreshold: 0.45
-    },
-    earringImg: 'earring.png',
-    necklaceImg: 'necklace_1.png'
+    }
 };
 
 class GlimmerApp {
@@ -46,8 +45,14 @@ class GlimmerApp {
             overlay: document.getElementById('loading-overlay'),
             startBtn: document.getElementById('start-btn'),
             toggleEarrings: document.getElementById('toggle-earrings'),
-            toggleNecklace: document.getElementById('toggle-necklace')
+            toggleNecklace: document.getElementById('toggle-necklace'),
+            earringGrid: document.getElementById('earring-grid'),
+            necklaceGrid: document.getElementById('necklace-grid')
         };
+
+        // Populate UI immediately
+        this.populateAssetGrids();
+        this.setupUI();
     }
 
     async init() {
@@ -60,10 +65,13 @@ class GlimmerApp {
                 this.pose.init()
             ]);
 
-            // 2. Load Assets
+            // 2. Load Default Assets
+            const defaultEarring = JEWELLERY_ASSETS.earrings[0].path;
+            const defaultNecklace = JEWELLERY_ASSETS.necklaces[0].path;
+
             await Promise.all([
-                this.earrings.loadAsset(CONFIG.earringImg),
-                this.necklace.loadAsset(CONFIG.necklaceImg)
+                this.earrings.loadAsset(defaultEarring),
+                this.necklace.loadAsset(defaultNecklace)
             ]);
 
             // 3. Setup Webcam
@@ -76,9 +84,6 @@ class GlimmerApp {
 
             this.canvas.width = 640;
             this.canvas.height = 480;
-
-            // 4. Bind UI
-            this.setupUI();
 
             // 5. Hide Loader
             this.ui.overlay.style.opacity = '0';
@@ -95,6 +100,31 @@ class GlimmerApp {
         }
     }
 
+    populateAssetGrids() {
+        const createCard = (asset, type) => {
+            const card = document.createElement('div');
+            card.className = 'asset-card';
+            card.dataset.type = type;
+            card.dataset.path = asset.path;
+            card.innerHTML = `<img src="${asset.path}" alt="${asset.name}">`;
+            
+            // Mark first item as active
+            if (asset.path === JEWELLERY_ASSETS[type === 'earring' ? 'earrings' : 'necklaces'][0].path) {
+                card.classList.add('active');
+            }
+            
+            return card;
+        };
+
+        JEWELLERY_ASSETS.earrings.forEach(asset => {
+            this.ui.earringGrid.appendChild(createCard(asset, 'earring'));
+        });
+
+        JEWELLERY_ASSETS.necklaces.forEach(asset => {
+            this.ui.necklaceGrid.appendChild(createCard(asset, 'necklace'));
+        });
+    }
+
     setupUI() {
         this.ui.toggleEarrings.onclick = () => {
             this.state.showEarrings = !this.state.showEarrings;
@@ -106,19 +136,23 @@ class GlimmerApp {
             this.ui.toggleNecklace.classList.toggle('active', this.state.showNecklace);
         };
 
-        // Asset selection logic
-        document.querySelectorAll('.asset-card').forEach(card => {
-            card.onclick = async () => {
-                const type = card.dataset.type;
-                const path = card.dataset.path;
-                
-                document.querySelectorAll(`.asset-card[data-type="${type}"]`).forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
+        // Delegate asset selection logic to the grids
+        const handleCardClick = async (e) => {
+            const card = e.target.closest('.asset-card');
+            if (!card) return;
 
-                if (type === 'earring') await this.earrings.loadAsset(path);
-                if (type === 'necklace') await this.necklace.loadAsset(path);
-            };
-        });
+            const type = card.dataset.type;
+            const path = card.dataset.path;
+            
+            document.querySelectorAll(`.asset-card[data-type="${type}"]`).forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            if (type === 'earring') await this.earrings.loadAsset(path);
+            if (type === 'necklace') await this.necklace.loadAsset(path);
+        };
+
+        this.ui.earringGrid.onclick = handleCardClick;
+        this.ui.necklaceGrid.onclick = handleCardClick;
     }
 
     async aiLoop() {

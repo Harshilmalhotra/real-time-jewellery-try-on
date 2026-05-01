@@ -30,9 +30,9 @@ export class LandmarkFusion {
         const shoulderDist = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y);
         const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
         
-        // COLLAR BONE HEIGHT: Approximately 67% of the way from nose to shoulders
-        // If nose is missing or pose is weird, fallback to shoulder line - 25%
-        const clavicleY = nose ? (nose.y + (avgShoulderY - nose.y) * 0.67) : (avgShoulderY - shoulderDist * 0.25);
+        // COLLAR BONE HEIGHT: Approximately 35% of the way from nose to shoulders
+        // If nose is missing or pose is weird, fallback to shoulder line - 30%
+        const clavicleY = nose ? (nose.y + (avgShoulderY - nose.y) * 0.55) : (avgShoulderY - shoulderDist * 0.30);
 
         const inwardOffset = 0.30; // 30% inward from shoulders
 
@@ -54,7 +54,7 @@ export class LandmarkFusion {
         };
 
         // Width based on clavicle distance
-        const necklaceWidth = Math.hypot(leftAnchor.x - rightAnchor.x, leftAnchor.y - rightAnchor.y) * 1.4;
+        const necklaceWidth = Math.hypot(leftAnchor.x - rightAnchor.x, leftAnchor.y - rightAnchor.y) * 1.9;
 
         // Rotation angle
         const angle = Math.atan2(rightAnchor.y - leftAnchor.y, rightAnchor.x - leftAnchor.x);

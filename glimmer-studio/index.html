@@ -31,7 +31,7 @@
         .app-container {
             flex: 1;
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -68,10 +68,25 @@
 
         .main-layout {
             display: flex;
-            gap: 30px;
+            gap: 20px;
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        @media (min-width: 1024px) {
+            .main-layout {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                justify-content: center;
+                gap: 40px;
+            }
+            .sidebar {
+                position: sticky;
+                top: 20px;
+                width: 360px;
+            }
         }
 
         .viewport-container {
@@ -103,7 +118,8 @@
         }
 
         .sidebar {
-            width: 300px;
+            width: 340px;
+            max-height: 80vh;
             background: var(--glass);
             border: 1px solid rgba(212, 175, 55, 0.1);
             border-radius: 25px;
@@ -112,17 +128,30 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #d4af37 transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 10px;
         }
 
         .section-title {
             font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #d4af37;
             letter-spacing: 2px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: block;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            padding-bottom: 8px;
+            text-transform: uppercase;
         }
 
         .control-group {
@@ -278,19 +307,15 @@
 
                 <div id="earring-selector" class="control-group">
                     <span class="section-title">EARRINGS</span>
-                    <div class="asset-grid">
-                        <div class="asset-card active" data-type="earring" data-path="earring.png">
-                            <img src="earring.png" alt="Earring">
-                        </div>
+                    <div id="earring-grid" class="asset-grid">
+                        <!-- Dynamically loaded -->
                     </div>
                 </div>
 
                 <div id="necklace-selector" class="control-group">
                     <span class="section-title">NECKLACES</span>
-                    <div class="asset-grid">
-                        <div class="asset-card active" data-type="necklace" data-path="necklace_1.png">
-                            <img src="necklace_1.png" alt="Necklace">
-                        </div>
+                    <div id="necklace-grid" class="asset-grid">
+                        <!-- Dynamically loaded -->
                     </div>
                 </div>
 

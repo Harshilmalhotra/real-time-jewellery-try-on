@@ -91,7 +91,7 @@ export class EarringEngine {
             this.ctx.translate(t.x, t.y);
             this.ctx.rotate(t.angle * Math.PI / 180);
             
-            let scale = (t.size * 2.8) / this.img.width;
+            let scale = (t.size * 1) / this.img.width;
             let ew = this.img.width * scale;
             let eh = this.img.height * scale;
             
