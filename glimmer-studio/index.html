@@ -1,3 +1,10 @@
+<!--
+  Copyright (c) 2026 Harshil Malhotra. All rights reserved.
+  This code is subject to the terms of the Custom Non-Commercial & Attribution License 
+  found in the LICENSE.md file in the root directory of this source tree.
+  Commercial use requires a paid license.
+-->
+
     <!-- MediaPipe Pose -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
@@ -330,8 +337,19 @@
 
     <footer>
         MADE BY HARSHIL MALHOTRA &copy; 2026
+        <div style="margin-top: 10px; font-size: 0.5rem; color: #777; max-width: 600px; text-align: center; line-height: 1.4;">
+            This software is subject to a Custom Non-Commercial & Attribution License. 
+            <br>Commercial use requires a paid commercial license.
+        </div>
     </footer>
 
+    <script>
+        console.log("%c⚠️ LICENSE NOTICE", "color: #d4af37; font-size: 18px; font-weight: bold;");
+        console.log("%cCopyright (c) 2026 Harshil Malhotra. All rights reserved.", "color: #ccc; font-size: 12px;");
+        console.log("%cThis software is subject to the Custom Non-Commercial & Attribution License.", "color: #ccc; font-size: 12px;");
+        console.log("%cCOMMERCIAL USE REQUIRES A PAID LICENSE.", "color: #ff4444; font-size: 14px; font-weight: bold;");
+        console.log("See LICENSE.md for details.");
+    </script>
     <script type="module" src="app.js"></script>
 </body>
 </html>

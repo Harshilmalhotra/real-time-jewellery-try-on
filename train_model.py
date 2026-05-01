@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Harshil Malhotra. All rights reserved.
+# This code is subject to the terms of the Custom Non-Commercial & Attribution License 
+# found in the LICENSE.md file in the root directory of this source tree.
+# Commercial use requires a paid license.
+
 import os
 import torch
 import yaml

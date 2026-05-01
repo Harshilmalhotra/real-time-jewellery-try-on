@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2026 Harshil Malhotra. All rights reserved.
+ * This code is subject to the terms of the Custom Non-Commercial & Attribution License 
+ * found in the LICENSE.md file in the root directory of this source tree.
+ * Commercial use requires a paid license.
+ */
+
 /**
  * 📦 Glimmer Jewellery Manifest
  * Add your image filenames here after placing them in the respective folders.

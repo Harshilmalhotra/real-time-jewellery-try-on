@@ -1,0 +1,43 @@
+This project utilizes the following third-party software and libraries:
+
+========================================================================
+MediaPipe Pose
+========================================================================
+Copyright 2020 The MediaPipe Authors.
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+========================================================================
+Ultralytics YOLOv8
+========================================================================
+Copyright (c) Ultralytics, LLC.
+Licensed under the GNU AGPL-3.0 License.
+You may obtain a copy of the License at
+https://github.com/ultralytics/ultralytics/blob/main/LICENSE
+
+========================================================================
+ONNX Runtime Web
+========================================================================
+Copyright (c) Microsoft Corporation.
+Licensed under the MIT License.
+You may obtain a copy of the License at
+https://github.com/microsoft/onnxruntime/blob/main/LICENSE
+
+========================================================================
+OpenCV (opencv-python)
+========================================================================
+Copyright (c) 2000-2023, Intel Corporation, all rights reserved.
+Copyright (c) 2009-2011, Willow Garage Inc., all rights reserved.
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+========================================================================
+PyTorch
+========================================================================
+Copyright (c) 2016- Facebook, Inc (Adam Paszke)
+Copyright (c) 2014- Facebook, Inc (Soumith Chintala)
+Licensed under a BSD-style license.
+You may obtain a copy of the License at
+https://github.com/pytorch/pytorch/blob/main/LICENSE

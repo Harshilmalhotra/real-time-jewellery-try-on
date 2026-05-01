@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Harshil Malhotra. All rights reserved.
+# This code is subject to the terms of the Custom Non-Commercial & Attribution License 
+# found in the LICENSE.md file in the root directory of this source tree.
+# Commercial use requires a paid license.
+
 # ✨ Optimized Real-Time Jewellery Try-On with Physics (v1.2.0)
 # Fixes lag, accuracy, and improves physics simulation
 
