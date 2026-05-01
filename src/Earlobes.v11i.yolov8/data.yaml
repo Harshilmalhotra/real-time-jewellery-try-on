@@ -1,4 +1,4 @@
-path: /home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8
+path: /Users/harshil/Desktop/real-time-jewellery-try-on/src/Earlobes.v11i.yolov8
 train: train/images
 val: valid/images
 test: test/images

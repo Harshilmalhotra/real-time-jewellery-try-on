@@ -30,8 +30,8 @@ We provide several model formats to ensure seamless integration across different
 ## ⚡ Quick Test (Standalone)
 Don't want to clone the whole repo? You can test the model with just two files:
 
-1. **Download the weights**: Grab `best.pt` from the `runs/detect/.../weights` folder.
-2. **Download the script**: Grab `model_standalone_run.py`.
+1. **Download the weights**: Grab `best.pt` from the `src/runs/detect/.../weights` folder.
+2. **Download the script**: Grab `src/model_standalone_run.py`.
 3. **Place both in the SAME folder** and run:
    ```bash
    pip install ultralytics opencv-python
@@ -62,12 +62,14 @@ Don't want to clone the whole repo? You can test the model with just two files:
 ### 1. Training from Scratch
 Run the optimized training script. It handles data verification, training (100 epochs), and automatic multi-platform export.
 ```bash
+cd src
 python train_model.py
 ```
 
 ### 2. Real-Time Webcam Inference
 Test the trained model immediately using your PC webcam.
 ```bash
+cd src
 python inference_webcam.py
 ```
 
@@ -82,19 +84,20 @@ Based on the latest training run of 100 epochs on a dataset of **11,000+ images*
 - **Recall:** 95.0%
 
 > [!NOTE]
-> Detailed training charts (Loss, Precision, R-curves) are available in the `runs/detect/multi_feature_detection/v1_nano/` directory.
+> Detailed training charts (Loss, Precision, R-curves) are available in the `src/runs/detect/multi_feature_detection/v1_nano/` directory.
 
 ---
 
 ## 🏗️ Project Structure
 ```text
 .
-├── train_model.py         # Automated training & export pipeline
-├── inference_webcam.py    # Real-time CV2 detector (PC)
-├── Earlobes.v11i.yolov8/  # Dataset and annotations
-├── runs/detect/           # Training logs and multi-format weights
-│   └── .../weights/       # best.pt, best.onnx, best.tflite, best.mlpackage
-└── yolov8n.pt             # Base pre-trained model
+└── src/
+    ├── train_model.py         # Automated training & export pipeline
+    ├── inference_webcam.py    # Real-time CV2 detector (PC)
+    ├── Earlobes.v11i.yolov8/  # Dataset and annotations
+    ├── runs/detect/           # Training logs and multi-format weights
+    │   └── .../weights/       # best.pt, best.onnx, best.tflite, best.mlpackage
+    └── yolov8n.pt             # Base pre-trained model
 ```
 
 ## 🤝 Contributing

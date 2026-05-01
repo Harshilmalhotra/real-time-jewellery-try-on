@@ -9,7 +9,7 @@ import yaml
 from ultralytics import YOLO
 
 # Configuration
-DATASET_YAML = "/home/harshil-malhotra/Desktop/real-time-jewellery-try-on/Earlobes.v11i.yolov8/data.yaml"
+DATASET_YAML = "/Users/harshil/Desktop/real-time-jewellery-try-on/src/Earlobes.v11i.yolov8/data.yaml"
 MODEL_TYPE = "yolov8n.pt"  # Nano model: Perfect for mobile (Android/iOS)
 PROJECT_NAME = "multi_feature_detection"
 EXPERIMENT_NAME = "v1_nano"
