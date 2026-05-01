@@ -1,3 +1,16 @@
+# v2.1.0 - Glimmer Studio: The Immersive Update ✨
+**@Harshilmalhotra Harshilmalhotra released this now**
+
+## v2.1.0 - Cinematic UI, Responsive Constraints, and Efficient Fetching
+Building on the web-native foundation of v2.0, this update focuses on vastly improving the user's first impression with a cinematic startup sequence and strict responsive design enhancements for desktop users.
+
+### 🌟 Major Highlights in v2.1
+*   **Immersive Startup Sequence:** Removed the static loading screen in favor of a new "TURN ON NEURAL MIRROR" interaction directly on the viewport. This activates a magical spinning animation and real-time "techy logs" that display the neural network's boot process.
+*   **Zero-Scroll Desktop Layout:** Completely refactored the layout logic for desktop devices (`> 1024px`). By leveraging strict `100vh` constraints and dynamic `flex: 1` sizing, the studio now perfectly scales its viewport to fit the screen without cutting off the footer or requiring any scrolling.
+*   **Efficient Fetching & Cache Busting:** Implemented script versioning (cache busting) for core engine files. This ensures that users always fetch the most up-to-date JavaScript modules and models upon initialization, preventing stale cache errors during rapid iterative deployments.
+
+---
+
 # v2.0.0 - Glimmer Studio: The Web Revolution ✨
 **@Harshilmalhotra Harshilmalhotra released this now**
 
